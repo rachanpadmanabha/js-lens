@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-base: #0d0d0f;
+  --bg-surface: #111114;
+  --bg-elevated: #18181d;
+  --bg-hover: #1f1f26;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-glow: rgba(99, 102, 241, 0.35);
+  --text-primary: #f0f0f5;
+  --text-muted: #6b6b80;
+  --text-code: #e2e8f0;
+  --accent-indigo: #818cf8;
+  --accent-blue: #60a5fa;
+  --accent-purple: #a78bfa;
+  --accent-green: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-pink: #f472b6;
+}
+
+html,
+body,
+#root {
+  background: var(--bg-base);
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+}
+
+/* Glow shadows */
+.glow-blue {
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.15),
+    0 4px 20px rgba(96, 165, 250, 0.07);
+}
+.glow-purple {
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.15),
+    0 4px 20px rgba(167, 139, 250, 0.07);
+}
+.glow-amber {
+  box-shadow:
+    0 0 0 1px rgba(251, 191, 36, 0.15),
+    0 4px 20px rgba(251, 191, 36, 0.07);
+}
+.glow-pink {
+  box-shadow:
+    0 0 0 1px rgba(244, 114, 182, 0.15),
+    0 4px 20px rgba(244, 114, 182, 0.07);
+}
+.glow-green {
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.15),
+    0 4px 20px rgba(52, 211, 153, 0.07);
+}
+.glow-indigo {
+  box-shadow:
+    0 0 0 1px rgba(129, 140, 248, 0.15),
+    0 4px 20px rgba(129, 140, 248, 0.07);
+}
+
+/* Queue item — glass-panel variant without backdrop-filter for scroll perf.
+   backdrop-filter inside overflow-x containers causes clipping during scroll
+   because the browser defers the blur repaint until scroll ends. */
+.queue-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+/* Promote the scroll container to its own GPU layer so children stay painted */
+.queue-scroll {
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Card hover */
+.card-hover:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Button press */
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Monaco current line highlight */
+.current-line-highlight {
+  background: rgba(129, 140, 248, 0.12) !important;
+  border-left: 2px solid #818cf8 !important;
+}
+
+/* Pulse animation for current line */
+@keyframes line-pulse {
+  0%,
+  100% {
+    background: rgba(129, 140, 248, 0.08);
+  }
+  50% {
+    background: rgba(129, 140, 248, 0.18);
+  }
+}
+.current-line-pulse {
+  animation: line-pulse 1.5s ease-in-out infinite;
+  border-left: 2px solid #818cf8 !important;
+}
+
+/* Event loop rotation */
+@keyframes slow-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.event-loop-idle {
+  animation: slow-spin 3s linear infinite;
+  opacity: 0.4;
+}
+.event-loop-active {
+  animation: slow-spin 0.4s linear infinite;
+  opacity: 1;
+}
+
+/* Reset button spin */
+@keyframes reset-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.reset-spin {
+  animation: reset-spin 0.3s ease-out;
+}
+
+/* Resize handle */
+[data-panel-resize-handle-id] {
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 150ms;
+}
+[data-panel-resize-handle-id]:hover,
+[data-panel-resize-handle-id][data-resize-handle-active] {
+  background: rgba(129, 140, 248, 0.35);
+}
+
+/* Badge hover */
+.badge-hover:hover {
+  transform: scale(1.05);
+}
