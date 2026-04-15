@@ -449,9 +449,9 @@ describe('stepForward — speed delay mapping', () => {
     for (let i = 0; i < steps.length; i++) {
       stepForward();
       if (steps[i].type === 'microtask_run') {
-        // At speed 1, popDelay = 1500 * 0.6 = 900ms
-        // After 800ms, should still be active
-        vi.advanceTimersByTime(800);
+        // At speed 1, popDelay = 2000 * 0.6 = 1200ms
+        // After 1100ms, should still be active
+        vi.advanceTimersByTime(1100);
         // After full delay, should auto-pop
         vi.advanceTimersByTime(200);
         break;

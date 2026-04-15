@@ -123,11 +123,31 @@ The app will be available at `http://localhost:5173`.
 |---------|-------------|
 | `npm run dev` | Start development server with hot reload |
 | `npm run build` | Build for production |
+| `npm run build:firebase` | Build with root `/` base path for Firebase Hosting |
 | `npm run preview` | Preview production build locally |
+| `npm run deploy:firebase` | Build and deploy the app to Firebase Hosting |
 | `npm run lint` | Run ESLint |
 | `npm run test` | Run tests once |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run test:coverage` | Run tests with coverage report |
+
+### Deploying To Firebase Hosting
+
+This repository already has a Vite build configured for GitHub Pages with the `/js-lens/` base path. Firebase Hosting serves the app from the root path, so use the Firebase-specific build script when deploying there.
+
+```bash
+# Install the Firebase CLI if needed
+npm install -g firebase-tools
+
+# Log in and link this repo to your Firebase project
+firebase login
+firebase use --add
+
+# Build and deploy
+npm run deploy:firebase
+```
+
+The Firebase Hosting config uses a single-page app rewrite so client-side routes resolve to `index.html`.
 
 ---
 
