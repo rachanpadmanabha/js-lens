@@ -42,6 +42,29 @@ export function instrumentCode(code) {
     return null;
   }
 
+  // Extract the body of a single-line brace callback like:
+  //   .then(val => { console.log(val); return val + 1; })
+  // Returns an array of trimmed statements, or null.
+  function extractSingleLineBraceBody(line) {
+    const arrowIdx = line.indexOf('=>');
+    if (arrowIdx === -1) return null;
+    const afterArrow = line.slice(arrowIdx + 2).trim();
+    if (!afterArrow.startsWith('{')) return null;
+    let depth = 0;
+    for (let i = 0; i < afterArrow.length; i++) {
+      if (afterArrow[i] === '{') depth++;
+      if (afterArrow[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          const body = afterArrow.slice(1, i).trim();
+          if (!body) return null;
+          return body.split(';').map(s => s.trim()).filter(Boolean);
+        }
+      }
+    }
+    return null;
+  }
+
   // ── Phase 1: identify function definitions ────────────────────────────
   const funcDefs = {}; // name → { name, params, startLine, endLine, isAsync, isGenerator }
 
@@ -134,14 +157,18 @@ export function instrumentCode(code) {
       const range = findBraceBody(idx);
       if (range && range.endLine > idx) {
         asyncCallbackRanges.push({ startLine: idx, endLine: range.endLine, kind: 'macrotask' });
-        // Only add to skipRanges if this is at top level (not inside a function def)
         if (!isInsideFuncDef(idx)) {
           skipRanges.push({ startLine: idx + 1, endLine: range.endLine });
         }
       } else {
-        const expr = extractInlineExpression(trimmed);
-        if (expr) {
-          asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'macrotask', inlineExpr: expr });
+        const braceBody = extractSingleLineBraceBody(trimmed);
+        if (braceBody) {
+          asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'macrotask', inlineBody: braceBody });
+        } else {
+          const expr = extractInlineExpression(trimmed);
+          if (expr) {
+            asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'macrotask', inlineExpr: expr });
+          }
         }
       }
     }
@@ -154,9 +181,14 @@ export function instrumentCode(code) {
           skipRanges.push({ startLine: idx + 1, endLine: range.endLine });
         }
       } else {
-        const expr = extractInlineExpression(trimmed);
-        if (expr) {
-          asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'microtask', inlineExpr: expr });
+        const braceBody = extractSingleLineBraceBody(trimmed);
+        if (braceBody) {
+          asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'microtask', inlineBody: braceBody });
+        } else {
+          const expr = extractInlineExpression(trimmed);
+          if (expr) {
+            asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'microtask', inlineExpr: expr });
+          }
         }
       }
     }
@@ -169,9 +201,14 @@ export function instrumentCode(code) {
           skipRanges.push({ startLine: idx + 1, endLine: range.endLine });
         }
       } else {
-        const expr = extractInlineExpression(trimmed);
-        if (expr) {
-          asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'microtask', inlineExpr: expr });
+        const braceBody = extractSingleLineBraceBody(trimmed);
+        if (braceBody) {
+          asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'microtask', inlineBody: braceBody });
+        } else {
+          const expr = extractInlineExpression(trimmed);
+          if (expr) {
+            asyncCallbackRanges.push({ startLine: idx, endLine: idx, kind: 'microtask', inlineExpr: expr });
+          }
         }
       }
     }
@@ -301,21 +338,6 @@ export function instrumentCode(code) {
       return;
     }
 
-    // console.log / warn / error
-    const consoleMatch = trimmed.match(/console\.(log|warn|error)\s*\((.+)\)/);
-    if (consoleMatch) {
-      addStep(
-        'console',
-        {
-          level: consoleMatch[1],
-          text: consoleMatch[2],
-          detail: `console.${consoleMatch[1]}(${consoleMatch[2]})`,
-        },
-        lineNum
-      );
-      return;
-    }
-
     // setTimeout
     if (stripped.includes('setTimeout')) {
       const delay = extractTimerDelay(trimmed, lineNum - 1, '0');
@@ -433,6 +455,23 @@ export function instrumentCode(code) {
         lineNum
       );
       return 'await';
+    }
+
+    // console.log / warn / error — checked after async API handlers so that
+    // inline callbacks like `setTimeout(() => console.log(...), 0)` are
+    // properly recognised as async operations rather than sync console calls.
+    const consoleMatch = trimmed.match(/console\.(log|warn|error)\s*\((.+)\)/);
+    if (consoleMatch) {
+      addStep(
+        'console',
+        {
+          level: consoleMatch[1],
+          text: consoleMatch[2],
+          detail: `console.${consoleMatch[1]}(${consoleMatch[2]})`,
+        },
+        lineNum
+      );
+      return;
     }
 
     // IIFE: (function() { ... })() or (async function() { ... })()
@@ -573,6 +612,10 @@ export function instrumentCode(code) {
 
     if (cbInfo.inlineExpr) {
       processLine(cbInfo.inlineExpr, cbInfo.startLine + 1, 'callback');
+    } else if (cbInfo.inlineBody) {
+      for (const stmt of cbInfo.inlineBody) {
+        processLine(stmt, cbInfo.startLine + 1, 'callback');
+      }
     } else if (cbInfo.endLine > cbInfo.startLine) {
       for (let i = cbInfo.startLine + 1; i < cbInfo.endLine; i++) {
         const trimmed = lines[i].trim();

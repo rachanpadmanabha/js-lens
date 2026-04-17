@@ -154,19 +154,16 @@ describe('Integration — Promise Chain preset', () => {
   const code = PRESETS['Promise Chain'];
 
   it('produces console output steps for the chain', () => {
-    // The preset uses single-line .then() bodies which processLine detects
-    // as console.log statements (console regex matches before .then).
     const steps = instrumentCode(code);
     const consoleLogs = stepsByType(steps, 'console');
-    // The chained .then callbacks produce console steps
     expect(consoleLogs.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('produces valid step sequence', () => {
+  it('produces valid step sequence starting with Global push', () => {
     const steps = instrumentCode(code);
     expect(steps.length).toBeGreaterThan(2);
     expect(steps[0].type).toBe('callstack_push');
-    expect(steps.at(-1).type).toBe('callstack_pop');
+    expect(steps[0].name).toBe('Global Execution Context');
   });
 });
 

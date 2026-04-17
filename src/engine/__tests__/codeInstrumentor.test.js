@@ -367,13 +367,16 @@ setTimeout(() => {
     expect(consoleLogs.some((l) => l.text.includes("'delayed'"))).toBe(true);
   });
 
-  it('inline setTimeout with console.log is captured as console step (regex priority)', () => {
-    // The instrumentor's processLine matches console.log before setTimeout
-    // for single-line inline callbacks — this is by design.
+  it('inline setTimeout with console.log produces macrotask + console step', () => {
     const code = "setTimeout(() => console.log('inline'), 0);";
     const steps = instrumentCode(code);
+    const macrotasks = stepsByType(steps, 'macrotask_add');
+    expect(macrotasks.length).toBe(1);
     const consoleLogs = stepsByType(steps, 'console');
-    expect(consoleLogs.length).toBeGreaterThanOrEqual(1);
+    expect(consoleLogs.length).toBe(1);
+    const macroRunIdx = steps.findIndex(s => s.type === 'macrotask_run');
+    const consoleIdx = steps.findIndex(s => s.type === 'console');
+    expect(macroRunIdx).toBeLessThan(consoleIdx);
   });
 
   it('multiple multi-line setTimeouts create multiple macrotasks', () => {
@@ -698,6 +701,37 @@ console.log('2 — sync');`;
     const steps = instrumentCode(code);
     expect(stepsByType(steps, 'macrotask_add').length).toBe(1);
     expect(stepsByType(steps, 'microtask_add').length).toBe(1);
+  });
+});
+
+describe('instrumentCode — preset: Event Loop Order (inline callbacks)', () => {
+  const code = `console.log('1 — sync');
+setTimeout(() => console.log('4 — macrotask'), 0);
+Promise.resolve().then(() => console.log('3 — microtask'));
+console.log('2 — sync');`;
+
+  it('produces steps in correct event-loop order with inline callbacks', () => {
+    const steps = instrumentCode(code);
+
+    const consoleLogs = stepsByType(steps, 'console');
+    expect(consoleLogs.length).toBe(4);
+    expect(consoleLogs[0].text).toContain('1');
+    expect(consoleLogs[1].text).toContain('2');
+    expect(consoleLogs[2].text).toContain('3');
+    expect(consoleLogs[3].text).toContain('4');
+  });
+
+  it('creates macrotask and microtask for inline callbacks', () => {
+    const steps = instrumentCode(code);
+    expect(stepsByType(steps, 'macrotask_add').length).toBe(1);
+    expect(stepsByType(steps, 'microtask_add').length).toBe(1);
+  });
+
+  it('microtask console output appears before macrotask console output', () => {
+    const steps = instrumentCode(code);
+    const microRunIdx = steps.findIndex((s) => s.type === 'microtask_run');
+    const macroRunIdx = steps.findIndex((s) => s.type === 'macrotask_run');
+    expect(microRunIdx).toBeLessThan(macroRunIdx);
   });
 });
 
