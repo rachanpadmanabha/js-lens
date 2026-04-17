@@ -102,6 +102,20 @@ export default function App() {
           </Panel>
         </Group>
       </div>
+
+      <a
+        href="https://github.com/rachanpadmanabha/js-lens/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-2 right-3 p-1.5 rounded-md text-[var(--text-muted)] hover:text-accent-indigo hover:bg-[var(--bg-hover)] transition-colors opacity-50 hover:opacity-100"
+        title="Report a Bug or Request a Feature"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </a>
     </div>
   );
 }
