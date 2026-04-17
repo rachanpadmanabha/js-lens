@@ -7,10 +7,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:firebase": "vite build --base /",
+    "build:firebase": "vite build",
+    "build:github": "vite build --mode github-pages",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy:firebase": "npm run build:firebase && firebase deploy --only hosting",
+    "deploy:firebase": "npm run build:firebase && npx -y firebase-tools@latest deploy --only hosting",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
